@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.model_selection import cross_val_score
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,3 +33,11 @@ importances = pd.Series(
     index=X_train.columns
 ).sort_values(ascending=False)
 print("Top 10 features :\n", importances.head(10))
+
+
+# --- Validation croiseé ---
+X_all = pd.concat([X_train, X_test])
+y_all = pd.concat([y_train, y_test])
+scores = cross_val_score(model, X_all, y_all.values.ravel(), cv=5)
+print("Scores CV :", scores)
+print("Moyenne CV :", scores.mean().round(3))
