@@ -22,22 +22,34 @@ L'enjeu métier critique de ce projet est de maximiser le **Rappel (Recall) sur 
 ---
 
 ## 3. Architecture du Projet
-Afin de professionnaliser le code, éviter le travail en silos et éliminer les redondances, l'architecture a été restructurée de manière modulaire :
+Afin de professionnaliser le code, éviter le travail en silos et éliminer les redondances, l'architecture a été structurée de manière modulaire :
 
     projetdata/
     ├── data/
-    │   ├── raw/                 (Données brutes : accidents_2024.csv)
-    │   └── processed/           (Données nettoyées et prêtes pour les modèles)
-    ├── notebooks/               (Espace R&D)
-    │   ├── 01_eda.ipynb         (Analyse exploratoire et Data Visualisation)
-    │   └── 02_brouillons.ipynb  (Prototypes de modèles individuels)
-    ├── src/                     (Code source de production)
-    │   ├── preprocessing.py     (Nettoyage, imputation et One-Hot Encoding)
-    │   ├── models.py            (Configuration des algorithmes)
-    │   └── evaluation.py        (Validation croisée et calcul des métriques)
-    ├── main.py                  (Script principal orchestrateur)
-    ├── requirements.txt         (Dépendances du projet)
-    └── README.md                (Ce fichier)
+    │   ├── raw/                          (Données brutes : accidents_2024.csv)
+    │   ├── processed/                    (Données encodées prêtes pour les modèles)
+    │   │   ├── X_train.csv / X_test.csv
+    │   │   ├── y_train.csv / y_test.csv
+    │   │   └── accidents_2024_cleaned.csv
+    │   └── figures/                      (Visualisations EDA exportées)
+    ├── notebooks/                        (Espace R&D — exploration et prototypage)
+    │   ├── 01_preparation_donnees.ipynb  (Pipeline de nettoyage et encodage)
+    │   ├── 02_eda.ipynb                  (Analyse exploratoire et visualisations)
+    │   ├── data_cleaning.ipynb           (Nettoyage intermédiaire encodage numérique)
+    │   ├── modeling_decision_tree.ipynb  (Prototype Decision Tree)
+    │   ├── modelisation_knn.ipynb        (Prototype KNN)
+    │   ├── modelisation_random_forest.ipynb       (Prototype Random Forest)
+    │   └── modelisation_regression_logistique.ipynb (Prototype Régression Logistique)
+    ├── src/                              (Code source de production)
+    │   ├── preprocessing.py             (Nettoyage, imputation et One-Hot Encoding)
+    │   └── models.py                    (Configuration et hyperparamètres des algorithmes)
+    ├── documentation/
+    │   ├── Projet Data Science 2025-2026.pdf  (Consigne)
+    │   └── Rapport_DataScience_2025.docx      (Rapport du projet)
+    ├── main.py                           (Script principal orchestrateur)
+    ├── requirements.txt                  (Dépendances du projet)
+    ├── .gitignore
+    └── README.md                         (Ce fichier)
 
 ---
 

@@ -6,7 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 def get_models():
     return {
-        "Random Forest (Noé)": {
+        "Random Forest": {
             "model": RandomForestClassifier(
                 n_estimators=500,
                 class_weight={'Blessé léger': 1, 'Blessé hospitalisé': 2, 'Tué': 20},
@@ -14,7 +14,7 @@ def get_models():
             ),
             "scaled": False
         },
-        "Decision Tree (Younes)": {
+        "Decision Tree": {
             "model": DecisionTreeClassifier(
                 max_depth=10,
                 min_samples_split=10,
@@ -24,7 +24,7 @@ def get_models():
             ),
             "scaled": False
         },
-        "Régression Logistique (Chahine)": {
+        "Régression Logistique": {
             "model": LogisticRegression(
                 max_iter=1000,
                 class_weight='balanced',
