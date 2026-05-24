@@ -1,8 +1,8 @@
-# Fichier : src/models.py
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
+
 
 def get_models():
     return {
@@ -33,7 +33,7 @@ def get_models():
             "scaled": True
         },
         "KNN": {
-            "model": KNeighborsClassifier(n_neighbors=5),
+            "model": KNeighborsClassifier(n_neighbors=80, weights='distance'),
             "scaled": True
         }
     }
