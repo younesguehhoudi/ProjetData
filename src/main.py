@@ -1,117 +1,65 @@
-import pandas as pd
-import numpy as np
 import os
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
+import pandas as pd
+from pathlib import Path
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import classification_report
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Importation de nos propres modules
+from src.preprocessing import preparer_donnees
+from src.models import get_models
 
-# sorties de 01_preparation_donnees.ipynb : 103 features OHE, split 80/20 stratifié seed=42
-X_train = pd.read_csv(os.path.join(BASE_DIR, '../data/X_train.csv'))
-X_test  = pd.read_csv(os.path.join(BASE_DIR, '../data/X_test.csv'))
-y_train = pd.read_csv(os.path.join(BASE_DIR, '../data/y_train.csv'))
-y_test  = pd.read_csv(os.path.join(BASE_DIR, '../data/y_test.csv'))
+def main():
+    BASE_DIR = Path(__file__).resolve().parent
+    processed_dir = BASE_DIR / "data" / "processed"
+    
+    path_X_train = processed_dir / "X_train.csv"
+    path_X_test = processed_dir / "X_test.csv"
+    path_y_train = processed_dir / "y_train.csv"
+    path_y_test = processed_dir / "y_test.csv"
+    
+    if not (path_X_train.exists() and path_X_test.exists() and path_y_train.exists() and path_y_test.exists()):
+        print("Lancement du preprocessing automatique...")
+        X_train, X_test, y_train, y_test = preparer_donnees(BASE_DIR)
+    else:
+        print("Fichiers de données récupérés depuis data/processed/.")
+        X_train = pd.read_csv(path_X_train)
+        X_test = pd.read_csv(path_X_test)
+        y_train = pd.read_csv(path_y_train).squeeze()
+        y_test = pd.read_csv(path_y_test).squeeze()
 
-y_train_1d = y_train.values.ravel()
-y_test_1d  = y_test.values.ravel()
+    models = get_models()
+    resultats_synthese = []
 
-# jeu complet reconstruit uniquement pour la validation croisée
-X_all = pd.concat([X_train, X_test])
-y_all = pd.concat([y_train, y_test]).values.ravel()
+    print(f"Évaluation sur {X_train.shape[1]} caractéristiques...")
+    print("="*60)
 
-# KNN et RL sont sensibles aux échelles — arbre et forêt ne le sont pas
-scaler         = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled  = scaler.transform(X_test)
-X_all_scaled   = scaler.transform(X_all)
+    for name, config in models.items():
+        print(f"Modèle : {name}...")
+        model = config["model"]
+        
+        if config["scaled"]:
+            scaler = StandardScaler()
+            X_tr_final = scaler.fit_transform(X_train)
+            X_te_final = scaler.transform(X_test)
+        else:
+            X_tr_final = X_train
+            X_te_final = X_test
+            
+        model.fit(X_tr_final, y_train)
+        y_pred = model.predict(X_te_final)
+        report = classification_report(y_test, y_pred, output_dict=True)
+        
+        accuracy = report["accuracy"]
+        recall_tue = report.get("Tué", {}).get("recall", 0.0)
+        
+        resultats_synthese.append({"Modèle": name, "Accuracy": accuracy, "Recall (Tué)": recall_tue})
+        print(f"-> Fait. Recall 'Tué': {recall_tue:.3f}")
 
-# class_weight='balanced' sur tous les modèles : Tué ne représente que 7% des cas
-# Random Forest : poids x20 sur Tué — compromis recall/accuracy validé empiriquement
-models = {
-    "Random Forest (Noé)": {
-        "model": RandomForestClassifier(
-            n_estimators=500,
-            class_weight={'Blessé léger': 1, 'Blessé hospitalisé': 2, 'Tué': 20},
-            random_state=42
-        ),
-        "scaled": False
-    },
-    "Decision Tree (Younes)": {
-        "model": DecisionTreeClassifier(
-            max_depth=10,
-            min_samples_split=10,
-            min_samples_leaf=5,
-            class_weight='balanced',
-            random_state=42
-        ),
-        "scaled": False
-    },
-    "Régression Logistique (Chahine)": {
-        "model": LogisticRegression(
-            max_iter=1000,
-            class_weight='balanced',
-            random_state=42
-        ),
-        "scaled": True
-    },
-    "KNN": {
-        "model": KNeighborsClassifier(n_neighbors=5),
-        "scaled": True
-    }
-}
+    print("\n" + "="*60)
+    print("TABLEAU DE SYNTHÈSE (Trié par Recall Tué)")
+    print("="*60)
+    df_res = pd.DataFrame(resultats_synthese).sort_values(by="Recall (Tué)", ascending=False)
+    print(df_res.to_string(index=False))
 
-# métrique prioritaire : recall "Tué" — un faux négatif mortel coûte plus qu'une fausse alarme
-resultats = []
-
-for nom, config in models.items():
-    print(f"\n{'='*60}")
-    print(f"  {nom}")
-    print(f"{'='*60}")
-
-    m   = config["model"]
-    use_scaled = config["scaled"]
-
-    Xtr = X_train_scaled if use_scaled else X_train
-    Xte = X_test_scaled  if use_scaled else X_test
-    Xal = X_all_scaled   if use_scaled else X_all
-
-    m.fit(Xtr, y_train_1d)
-    y_pred = m.predict(Xte)
-
-    acc = accuracy_score(y_test_1d, y_pred)
-    print(f"\nAccuracy : {acc:.4f}")
-    print(classification_report(y_test_1d, y_pred))
-    print("Matrice de confusion :")
-    print(confusion_matrix(y_test_1d, y_pred))
-
-    # CV sur le jeu complet pour une estimation moins biaisée qu'un seul split
-    scores = cross_val_score(m, Xal, y_all, cv=5, scoring='accuracy')
-    print(f"\nValidation croisée (5-fold) : {scores.round(3)}")
-    print(f"Moyenne CV : {scores.mean():.3f} (+/- {scores.std():.3f})")
-
-    # recall "Tué" extrait séparément pour le tri du tableau comparatif
-    from sklearn.metrics import recall_score
-    classes = sorted(set(y_test_1d))
-    recalls = recall_score(y_test_1d, y_pred, average=None, labels=classes)
-    recall_tue = recalls[classes.index('Tué')] if 'Tué' in classes else 0
-
-    resultats.append({
-        "Modèle": nom,
-        "Accuracy": round(acc, 3),
-        "Recall Tué": round(recall_tue, 3),
-        "CV Moyenne": round(scores.mean(), 3)
-    })
-
-# tri par recall "Tué" décroissant : critère de sélection du modèle retenu
-print(f"\n{'='*60}")
-print("  COMPARAISON FINALE DES 4 MODÈLES")
-print(f"{'='*60}")
-df_results = pd.DataFrame(resultats)
-df_results = df_results.sort_values("Recall Tué", ascending=False)
-print(df_results.to_string(index=False))
-print(f"\n→ Métrique prioritaire : Recall Tué (minimiser les accidents mortels non détectés)")
+if __name__ == "__main__":
+    main()
