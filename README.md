@@ -27,15 +27,15 @@ Afin de professionnaliser le code, éviter le travail en silos et éliminer les 
     projetdata/
     ├── data/
     │   ├── raw/                          (Données brutes : accidents_2024.csv)
-    │   ├── processed/                    (Données encodées prêtes pour les modèles)
+    │   ├── processed/                    (Données prêtes pour les modèles — générées par main.py)
     │   │   ├── X_train.csv / X_test.csv
     │   │   ├── y_train.csv / y_test.csv
-    │   │   └── accidents_2024_cleaned.csv
-    │   └── figures/                      (Visualisations EDA exportées)
+    │   │   └── accidents_2024_cleaned.csv  (encodage numérique, utilisé par modeling_decision_tree.ipynb)
+    │   └── figures/                      (Visualisations EDA exportées par 02_eda.ipynb)
     ├── notebooks/                        (Espace R&D — exploration et prototypage)
-    │   ├── 01_preparation_donnees.ipynb  (Pipeline de nettoyage et encodage)
-    │   ├── 02_eda.ipynb                  (Analyse exploratoire et visualisations)
-    │   ├── data_cleaning.ipynb           (Nettoyage intermédiaire encodage numérique)
+    │   ├── 01_preparation_donnees.ipynb  (Pipeline de nettoyage, encodage OHE et split train/test)
+    │   ├── 02_eda.ipynb                  (Analyse exploratoire — 5 graphiques exportés dans data/figures/)
+    │   ├── data_cleaning.ipynb           (Exploration préliminaire du nettoyage, indépendant du pipeline)
     │   ├── modeling_decision_tree.ipynb  (Prototype Decision Tree)
     │   ├── modelisation_knn.ipynb        (Prototype KNN)
     │   ├── modelisation_random_forest.ipynb       (Prototype Random Forest)
@@ -45,7 +45,7 @@ Afin de professionnaliser le code, éviter le travail en silos et éliminer les 
     │   └── models.py                    (Configuration et hyperparamètres des algorithmes)
     ├── documentation/
     │   ├── Projet Data Science 2025-2026.pdf  (Consigne)
-    │   └── Rapport_DataScience_2025.docx      (Rapport du projet)
+    │   └── Rapport_Final_L3SDN.docx          (Rapport du projet)
     ├── main.py                           (Script principal orchestrateur)
     ├── requirements.txt                  (Dépendances du projet)
     ├── .gitignore
